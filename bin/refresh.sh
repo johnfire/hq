@@ -17,5 +17,6 @@ echo "[$(date '+%Y-%m-%d %H:%M')] HQ refresh starting…"
 node bin/index.js build
 node bin/kpi.js collect $CI_FLAG
 node bin/enrich.js auto
+node bin/recent.js collect
 node bin/dashboard.js
 echo "[$(date '+%Y-%m-%d %H:%M')] HQ refresh done."

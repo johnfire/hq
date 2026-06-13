@@ -84,6 +84,7 @@ function render() {
     generated: null,
   });
   const descMap = readJson(path.join(DATA_DIR, "descriptions.json"), {});
+  const recent = readJson(path.join(DATA_DIR, "recent.json"), { items: [] });
 
   const searchItems = index.items
     .filter((it) => it.type !== "root")
@@ -127,6 +128,14 @@ function render() {
       .map(([k, v]) => `${k}: ${v}`)
       .join(" · ");
 
+  const recentRows = recent.items
+    .map((r) => {
+      const badge = r.exists ? "📄" : "✗";
+      const cls = r.exists ? "" : " arch";
+      return `<div class="reci${cls}"><span class="badge">${badge}</span><span class="recn">${esc(r.name)}</span><span class="meta">${esc(r.openedDate || "")}</span></div>`;
+    })
+    .join("");
+
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -135,11 +144,14 @@ function render() {
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: system-ui, sans-serif; background: #0d1117; color: #c9d1d9;
-         padding: 1.5rem; max-width: 60rem; margin-inline: auto; line-height: 1.5; }
+         padding: 1.5rem; max-width: 78rem; margin-inline: auto; line-height: 1.5; }
   h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
   .sub { color: #8b949e; font-size: .85rem; margin-bottom: 1.5rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+  @media (max-width: 48rem) { .grid { grid-template-columns: 1fr; } }
+  .span2 { grid-column: 1 / -1; }
   .card { background: #161b22; border: 0.0625rem solid #30363d; border-radius: .5rem;
-          padding: 1.25rem; margin-bottom: 1.25rem; }
+          padding: 1.25rem; margin: 0; }
   .card h2 { font-size: 1rem; margin: 0 0 .9rem; color: #e6edf3; }
   .gauge-track { background: #21262d; border-radius: .5rem; height: 1.4rem; overflow: hidden; }
   .gauge-fill { height: 100%; border-radius: .5rem; transition: width .3s; }
@@ -156,10 +168,17 @@ function render() {
   .hit { padding: .3rem 0; border-bottom: 0.0625rem solid #21262d; }
   .hit .badge { display: inline-block; width: 1.4rem; }
   .hit .meta { color: #8b949e; }
-  .arch { opacity: .6; }
+  .arch { opacity: .55; }
+  .reclist { max-height: 24rem; overflow: auto; }
+  .reci { display: flex; align-items: baseline; gap: .4rem; padding: .3rem 0;
+          border-bottom: 0.0625rem solid #21262d; font-size: .85rem; }
+  .reci .badge { width: 1.2rem; flex: none; }
+  .reci .recn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reci .meta { color: #8b949e; flex: none; font-variant-numeric: tabular-nums; }
 </style></head><body>
 <h1>HQ</h1>
 <div class="sub">${esc(os.hostname())} · rendered ${new Date().toISOString().slice(0, 16).replace("T", " ")}</div>
+<div class="grid">
 
 <div class="card">
   <h2>⛽ Token Governor</h2>
@@ -187,11 +206,21 @@ function render() {
 </div>
 
 <div class="card">
+  <h2>🕘 Recently opened (${recent.items.length})</h2>
+  ${
+    recent.items.length
+      ? `<div class="reclist">${recentRows}</div>`
+      : `<div class="sub">No recent docs — run <code>node bin/recent.js collect</code></div>`
+  }
+</div>
+
+<div class="card span2">
   <h2>🔎 Find anything</h2>
   <input id="q" type="search" placeholder="Search ${searchItems.length} folders & docs… (e.g. art marketing, taxes)" autofocus>
   <div id="results"></div>
   <div class="sub" style="margin-top:.8rem">${esc(fmtCounts(c.byType))} — ${esc(fmtCounts(c.byStatus))}</div>
 </div>
+</div><!-- /grid -->
 
 <script>
 const ITEMS = ${JSON.stringify(searchItems)};
