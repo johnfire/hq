@@ -1,0 +1,46 @@
+{
+  "roots": [
+    "ppp2",
+    "ai-workzone",
+    "Documents",
+    "Downloads",
+    "Art World"
+  ],
+  "skip_dirs": [
+    "node_modules",
+    "dist",
+    "build",
+    "out",
+    "target",
+    "vendor",
+    "coverage",
+    "Pods",
+    "__pycache__",
+    "venv",
+    "env"
+  ],
+  "skip_hidden": true,
+  "doc_exts": [
+    ".md",
+    ".pdf",
+    ".docx",
+    ".doc",
+    ".txt",
+    ".odt",
+    ".pptx",
+    ".xlsx",
+    ".csv",
+    ".key",
+    ".pages"
+  ],
+  "archived_segments": [
+    "archived",
+    "archive"
+  ],
+  "inactive_segments": [
+    "a-inactive",
+    "inactive",
+    "deprecated"
+  ],
+  "max_items": 50000
+}

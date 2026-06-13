@@ -1,0 +1,13 @@
+{
+  "window_hours": 5,
+  "estimated_quota_tokens": null,
+  "soft_ceiling_pct": 70,
+  "halt_pct": 85,
+  "reserve_tokens": 200000,
+  "_notes": {
+    "estimated_quota_tokens": "The 5-hour rolling quota is NOT queryable from any API. Leave null until you observe a real wall, then run `node bin/governor.js set-quota <tokens>` with the rolling-window spend at the moment it died. Tune over time.",
+    "soft_ceiling_pct": "Background building should stay under this % of estimated quota by default.",
+    "halt_pct": "At this %, halt all supervised projects, persist state, and check in with Chris.",
+    "reserve_tokens": "Absolute floor never spent on background building — kept for live/urgent human needs (e.g. Augsburg-style rerouting)."
+  }
+}

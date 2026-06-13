@@ -1,0 +1,8 @@
+# HQ runtime data — contains a map of the filesystem including SENSITIVE locations.
+# Never commit. Regenerated on each machine via bin/refresh.sh.
+data/
+dashboard.html
+
+# misc
+node_modules/
+*.log
