@@ -189,9 +189,16 @@ function render() {
     })
     .join("");
 
+  // Per-machine favicon emoji. "pierre" → a cat (Chris's first pet cat).
+  const FAVICONS = { pierre: "🐱" };
+  const favEmoji = FAVICONS[os.hostname()] || "🐱";
+  const favSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="88">${favEmoji}</text></svg>`;
+  const favHref = "data:image/svg+xml," + encodeURIComponent(favSvg);
+
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="${favHref}">
 <title>HQ — ${esc(os.hostname())}</title>
 <style>
   :root { color-scheme: dark; }
