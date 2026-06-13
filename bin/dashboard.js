@@ -200,7 +200,7 @@ function render() {
          padding: 1.5rem; max-width: 78rem; margin-inline: auto; line-height: 1.5; }
   h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
   .sub { color: #8b949e; font-size: .85rem; margin-bottom: 1.5rem; }
-  .cols { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .cols { display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1.25rem; }
   .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.25rem; }
   @media (max-width: 48rem) { .cols { flex-direction: column; } }
   .card { background: #161b22; border: 0.0625rem solid #30363d; border-radius: .5rem;
