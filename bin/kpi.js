@@ -42,6 +42,12 @@ function sh(cmd, cwd) {
   }
 }
 
+function ghSlug(remote) {
+  if (!remote) return null;
+  const m = remote.match(/github\.com[:/]([^/]+\/[^/]+?)(?:\.git)?$/);
+  return m ? m[1] : null;
+}
+
 function discoverRepos() {
   const repos = [];
   for (const root of SCAN_ROOTS) {
@@ -87,6 +93,9 @@ function collect(withCi) {
       [behind, ahead] = aheadBehind.split("\t").map((n) => parseInt(n, 10));
     }
 
+    const remote = sh("git remote get-url origin", abs);
+    const slug = ghSlug(remote);
+
     const proj = {
       name: path.basename(abs),
       path: rel,
@@ -96,7 +105,9 @@ function collect(withCi) {
       uncommitted: dirty,
       ahead,
       behind,
+      slug,
       ci: null,
+      issues: null, // null = not fetched; [] = fetched, none open
     };
 
     if (withCi) {
@@ -116,6 +127,24 @@ function collect(withCi) {
             };
           }
         } catch {}
+      }
+      if (slug) {
+        const issRaw = sh(
+          `timeout 20 gh issue list -R ${slug} --state open --json number,title,createdAt,url --limit 30`,
+          abs,
+        );
+        if (issRaw !== null) {
+          try {
+            proj.issues = JSON.parse(issRaw).map((i) => ({
+              number: i.number,
+              title: i.title,
+              date: (i.createdAt || "").slice(0, 10),
+              url: i.url,
+            }));
+          } catch {
+            proj.issues = null;
+          }
+        }
       }
     }
     projects.push(proj);
@@ -151,8 +180,9 @@ function show() {
     const sync =
       p.ahead || p.behind ? ` ↑${p.ahead || 0}↓${p.behind || 0}` : "";
     const ci = p.ci ? `  CI:${p.ci.conclusion || p.ci.status}` : "";
+    const iss = p.issues ? `  issues:${p.issues.length}` : "";
     console.log(
-      `${(p.name + " ").padEnd(20, ".")} ${p.branch || "?"}  ${p.commitDate || "?"}  ${dirty}${sync}${ci}`,
+      `${(p.name + " ").padEnd(20, ".")} ${p.branch || "?"}  ${p.commitDate || "?"}  ${dirty}${sync}${ci}${iss}`,
     );
   }
 }

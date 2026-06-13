@@ -114,11 +114,33 @@ function render() {
         ? `<span class="warn">±${p.uncommitted}</span>`
         : `<span class="ok">clean</span>`;
       const sync =
-        p.ahead || p.behind ? ` ↑${p.ahead || 0}↓${p.behind || 0}` : "";
+        p.ahead || p.behind
+          ? ` <span class="warn">↑${p.ahead || 0}↓${p.behind || 0}</span>`
+          : "";
       const ci = p.ci
-        ? `<span class="${p.ci.conclusion === "success" ? "ok" : "warn"}">${esc(p.ci.conclusion || p.ci.status)}</span>`
-        : "—";
-      return `<tr><td>${esc(p.name)}</td><td>${esc(p.branch)}</td><td>${esc(p.commitDate)}</td><td>${dirty}${sync}</td><td>${ci}</td></tr>`;
+        ? ` · CI <span class="${p.ci.conclusion === "success" ? "ok" : "warn"}">${esc(p.ci.conclusion || p.ci.status)}</span>`
+        : "";
+      const n = p.issues ? p.issues.length : null;
+      const issBadge =
+        n === null
+          ? ""
+          : n === 0
+            ? `<span class="ibadge zero">0 issues</span>`
+            : `<span class="ibadge">${n} issue${n === 1 ? "" : "s"}</span>`;
+      const issueList =
+        p.issues && p.issues.length
+          ? `<div class="issues">${p.issues
+              .map(
+                (i) =>
+                  `<a class="iss" href="${esc(i.url)}" target="_blank" rel="noopener"><span class="inum">#${i.number}</span><span class="ititle">${esc(i.title)}</span><span class="meta">${esc(i.date)}</span></a>`,
+              )
+              .join("")}</div>`
+          : p.issues
+            ? `<div class="sub" style="padding:.4rem 0">No open issues 🎉</div>`
+            : `<div class="sub" style="padding:.4rem 0">Issue data not collected (run refresh --ci).</div>`;
+      const meta = `<span class="pmeta">${esc(p.branch || "?")} · ${esc(p.commitDate || "?")} · ${dirty}${sync}${ci}</span>`;
+      // Native disclosure: ▶ collapsed → ▼ expanded, no JS needed.
+      return `<details class="proj"><summary><span class="pname">${esc(p.name)}</span>${issBadge}${meta}</summary>${issueList}</details>`;
     })
     .join("");
 
@@ -175,6 +197,22 @@ function render() {
   .reci .badge { width: 1.2rem; flex: none; }
   .reci .recn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .reci .meta { color: #8b949e; flex: none; font-variant-numeric: tabular-nums; }
+  .proj { border-bottom: 0.0625rem solid #21262d; }
+  .proj > summary { cursor: pointer; padding: .45rem .2rem; list-style: revert;
+                    display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+  .proj > summary:hover { background: #1c2230; }
+  .proj .pname { font-weight: 600; color: #e6edf3; }
+  .proj .pmeta { color: #8b949e; font-size: .8rem; margin-left: auto; }
+  .ibadge { font-size: .7rem; background: #3d2a14; color: #d29922; border-radius: 1rem;
+            padding: .05rem .5rem; }
+  .ibadge.zero { background: #1b2a1b; color: #3fb950; }
+  .issues { padding: .2rem 0 .5rem 1.1rem; }
+  .iss { display: flex; align-items: baseline; gap: .5rem; padding: .25rem 0;
+         text-decoration: none; color: #c9d1d9; border-top: 0.0625rem solid #1b2027; }
+  .iss:hover .ititle { text-decoration: underline; }
+  .iss .inum { color: #8b949e; flex: none; font-variant-numeric: tabular-nums; }
+  .iss .ititle { flex: 1; }
+  .iss .meta { color: #8b949e; flex: none; font-size: .78rem; }
 </style></head><body>
 <h1>HQ</h1>
 <div class="sub">${esc(os.hostname())} · rendered ${new Date().toISOString().slice(0, 16).replace("T", " ")}</div>
@@ -197,10 +235,10 @@ function render() {
 </div>
 
 <div class="card">
-  <h2>📦 Projects (${kpi.projects.length})</h2>
+  <h2>📦 Projects (${kpi.projects.length}) — click a row for open issues</h2>
   ${
     kpi.projects.length
-      ? `<table><thead><tr><th>Project</th><th>Branch</th><th>Last commit</th><th>Changes</th><th>CI</th></tr></thead><tbody>${kpiRows}</tbody></table>`
+      ? kpiRows
       : `<div class="sub">No KPI data — run <code>node bin/kpi.js collect</code></div>`
   }
 </div>
