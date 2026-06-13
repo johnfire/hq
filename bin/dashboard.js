@@ -85,6 +85,37 @@ function render() {
   });
   const descMap = readJson(path.join(DATA_DIR, "descriptions.json"), {});
   const recent = readJson(path.join(DATA_DIR, "recent.json"), { items: [] });
+  const idxCfg = readJson(path.join(HQ_ROOT, "index-config.json"), {});
+
+  // Inactive / archived projects = index entries whose PARENT folder is a
+  // status container (e.g. ppp2/a-inactive/* , ppp2/archived/*).
+  const inacSegs = (
+    idxCfg.inactive_segments || ["a-inactive", "inactive", "deprecated"]
+  ).map((s) => s.toLowerCase());
+  const archSegs = (idxCfg.archived_segments || ["archived", "archive"]).map(
+    (s) => s.toLowerCase(),
+  );
+  const parentName = (p) => path.basename(path.dirname(p)).toLowerCase();
+  const pickGroup = (segs) =>
+    index.items
+      .filter(
+        (it) =>
+          it.type !== "doc" &&
+          it.type !== "root" &&
+          segs.includes(parentName(it.path)),
+      )
+      .sort((a, b) => (b.mtime || "").localeCompare(a.mtime || ""));
+  const inactiveProjects = pickGroup(inacSegs);
+  const archivedProjects = pickGroup(archSegs);
+
+  const groupRows = (items) =>
+    items
+      .map((it) => {
+        const d = descMap[it.path];
+        const desc = d && d.desc ? d.desc : "";
+        return `<div class="reci"><span class="badge">📁</span><span class="recn" title="~/${esc(it.path)}">${esc(it.name)}${desc ? ` — <span class="meta">${esc(desc)}</span>` : ""}</span><span class="meta">${esc(it.mtime || "")}</span></div>`;
+      })
+      .join("");
 
   const searchItems = index.items
     .filter((it) => it.type !== "root")
@@ -169,11 +200,12 @@ function render() {
          padding: 1.5rem; max-width: 78rem; margin-inline: auto; line-height: 1.5; }
   h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
   .sub { color: #8b949e; font-size: .85rem; margin-bottom: 1.5rem; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
-  @media (max-width: 48rem) { .grid { grid-template-columns: 1fr; } }
-  .span2 { grid-column: 1 / -1; }
+  .cols { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.25rem; }
+  @media (max-width: 48rem) { .cols { flex-direction: column; } }
   .card { background: #161b22; border: 0.0625rem solid #30363d; border-radius: .5rem;
-          padding: 1.25rem; margin: 0; }
+          padding: 1.25rem; margin: 0 0 1.25rem; }
+  .col .card { margin: 0; }
   .card h2 { font-size: 1rem; margin: 0 0 .9rem; color: #e6edf3; }
   .gauge-track { background: #21262d; border-radius: .5rem; height: 1.4rem; overflow: hidden; }
   .gauge-fill { height: 100%; border-radius: .5rem; transition: width .3s; }
@@ -213,10 +245,15 @@ function render() {
   .iss .inum { color: #8b949e; flex: none; font-variant-numeric: tabular-nums; }
   .iss .ititle { flex: 1; }
   .iss .meta { color: #8b949e; flex: none; font-size: .78rem; }
+  .group > summary { cursor: pointer; font-size: 1rem; font-weight: 600; color: #e6edf3;
+                     list-style: revert; }
+  .group > summary:hover { color: #fff; }
+  .group .reclist { margin-top: .8rem; }
 </style></head><body>
 <h1>HQ</h1>
 <div class="sub">${esc(os.hostname())} · rendered ${new Date().toISOString().slice(0, 16).replace("T", " ")}</div>
-<div class="grid">
+<div class="cols">
+<div class="col">
 
 <div class="card">
   <h2>⛽ Token Governor</h2>
@@ -235,15 +272,6 @@ function render() {
 </div>
 
 <div class="card">
-  <h2>📦 Projects (${kpi.projects.length}) — click a row for open issues</h2>
-  ${
-    kpi.projects.length
-      ? kpiRows
-      : `<div class="sub">No KPI data — run <code>node bin/kpi.js collect</code></div>`
-  }
-</div>
-
-<div class="card">
   <h2>🕘 Recently opened (${recent.items.length})</h2>
   ${
     recent.items.length
@@ -252,13 +280,49 @@ function render() {
   }
 </div>
 
-<div class="card span2">
+<div class="card">
+  <details class="group">
+    <summary>💤 Inactive projects (${inactiveProjects.length})</summary>
+    ${
+      inactiveProjects.length
+        ? `<div class="reclist">${groupRows(inactiveProjects)}</div>`
+        : `<div class="sub" style="margin-top:.8rem">None.</div>`
+    }
+  </details>
+</div>
+
+<div class="card">
+  <details class="group">
+    <summary>🗄️ Archived projects (${archivedProjects.length})</summary>
+    ${
+      archivedProjects.length
+        ? `<div class="reclist">${groupRows(archivedProjects)}</div>`
+        : `<div class="sub" style="margin-top:.8rem">None.</div>`
+    }
+  </details>
+</div>
+
+</div><!-- /col left -->
+<div class="col">
+
+<div class="card">
+  <h2>📦 Projects (${kpi.projects.length}) — click a row for open issues</h2>
+  ${
+    kpi.projects.length
+      ? kpiRows
+      : `<div class="sub">No KPI data — run <code>node bin/kpi.js collect</code></div>`
+  }
+</div>
+
+</div><!-- /col right -->
+</div><!-- /cols -->
+
+<div class="card">
   <h2>🔎 Find anything</h2>
   <input id="q" type="search" placeholder="Search ${searchItems.length} folders & docs… (e.g. art marketing, taxes)" autofocus>
   <div id="results"></div>
   <div class="sub" style="margin-top:.8rem">${esc(fmtCounts(c.byType))} — ${esc(fmtCounts(c.byStatus))}</div>
 </div>
-</div><!-- /grid -->
 
 <script>
 const ITEMS = ${JSON.stringify(searchItems)};

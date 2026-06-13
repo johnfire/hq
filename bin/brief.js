@@ -110,6 +110,22 @@ function main() {
     lines.push("");
   }
 
+  // Open GitHub issues (populated by `refresh.sh --ci`)
+  const withIssues = kpi.projects
+    .filter((p) => p.issues && p.issues.length)
+    .sort((a, b) => b.issues.length - a.issues.length);
+  const totalIssues = kpi.projects.reduce(
+    (s, p) => s + (p.issues ? p.issues.length : 0),
+    0,
+  );
+  if (totalIssues > 0) {
+    lines.push(
+      `## 🐛 Open issues (${totalIssues} across ${withIssues.length} repo${withIssues.length === 1 ? "" : "s"})`,
+    );
+    for (const p of withIssues) lines.push(`- ${p.name}: ${p.issues.length}`);
+    lines.push("");
+  }
+
   // Index freshness
   const idxAge = index.generated
     ? Math.floor((Date.now() - new Date(index.generated).getTime()) / 86400000)
