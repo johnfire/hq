@@ -20,6 +20,15 @@ const path = require("path");
 const HQ_ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(HQ_ROOT, "data");
 const OUT_PATH = path.join(HQ_ROOT, "dashboard.html");
+const HOME = os.homedir();
+
+// Build a file:// href from a home-relative path. Encodes each segment so
+// spaces/special chars survive. Works because the dashboard is itself opened
+// as a file:// page (browsers allow file://→file:// navigation).
+function fileHref(homeRelPath) {
+  const abs = path.join(HOME, homeRelPath);
+  return "file://" + abs.split("/").map(encodeURIComponent).join("/");
+}
 
 function readJson(p, fallback) {
   try {
@@ -185,7 +194,10 @@ function render() {
     .map((r) => {
       const badge = r.exists ? "📄" : "✗";
       const cls = r.exists ? "" : " arch";
-      return `<div class="reci${cls}"><span class="badge">${badge}</span><span class="recn">${esc(r.name)}</span><span class="meta">${esc(r.openedDate || "")}</span></div>`;
+      const nameCell = r.exists
+        ? `<a class="recn" href="${fileHref(r.path)}" title="~/${esc(r.path)}">${esc(r.name)}</a>`
+        : `<span class="recn" title="~/${esc(r.path)} (missing)">${esc(r.name)}</span>`;
+      return `<div class="reci${cls}"><span class="badge">${badge}</span>${nameCell}<span class="meta">${esc(r.openedDate || "")}</span></div>`;
     })
     .join("");
 
@@ -235,6 +247,8 @@ function render() {
           border-bottom: 0.0625rem solid #21262d; font-size: .85rem; }
   .reci .badge { width: 1.2rem; flex: none; }
   .reci .recn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  a.recn { color: #58a6ff; text-decoration: none; }
+  a.recn:hover { text-decoration: underline; }
   .reci .meta { color: #8b949e; flex: none; font-variant-numeric: tabular-nums; }
   .proj { border-bottom: 0.0625rem solid #21262d; }
   .proj > summary { cursor: pointer; padding: .45rem .2rem; list-style: revert;
