@@ -2,7 +2,7 @@
 
 > A personal command center for running many projects with an AI chief of staff,
 > designed so the AI is _always available_ but **almost never wastefully burning tokens**.
-> Status: **vision spec / living document**. Nothing built yet. v0.1 — 2026-06-13.
+> Status: **vision spec / living design doc**. v0 built (2026-06-13); this remains the design north-star. Last verified: 2026-06-20.
 
 ---
 
